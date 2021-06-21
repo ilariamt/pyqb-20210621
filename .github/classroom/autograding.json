@@ -3,14 +3,14 @@
       {
           "name": "types",
           "setup": "python3 -m pip install -r requirements.txt",
-          "run": "mypy exercise.py",
+          "run": "mypy exam.py",
           "timeout": 10,
           "points": null
       },
       {
           "name": "doctest",
           "setup": "python3 -m pip install -r requirements.txt",
-          "run": "python3 -m doctest exercise.py",
+          "run": "python3 -m doctest exam.py",
           "timeout": 60,
           "points": null
     }
