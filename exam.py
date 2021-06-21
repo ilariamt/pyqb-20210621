@@ -24,6 +24,10 @@
 #
 
 # %matplotlib inline
+import numpy as np   # type: ignore
+import pandas as pd  # type: ignore
+import matplotlib.pyplot as plt # type: ignore
+import pymc3 as pm   # type: ignore
 
 # ### Exercise 1 (max 2 points)
 #
@@ -32,32 +36,44 @@
 # Read the data in a Pandas DataFrame.
 #
 
-pass
+df = pd.read_csv('data.csv', index_col=0)
+
+df.head()
 
 # ### Exercise 2 (max 3 points)
 #
 # Plot the distribution of length.
 
-pass
+# +
+fig, ax = plt.subplots()
+
+_ = ax.hist(df['length'], bins='auto', density=True)
+# -
 
 # ### Exercise 3 (max 5 points)
 #
 # Collect in a new Pandas DataFrame the mean and standard deviation of length for each age.
 
-pass
+ldf = pd.DataFrame({'mean length': df.groupby('age').mean()['length'], 
+                    'std length': df.groupby('age').std()['length']})
+ldf
 
 # ### Exercise 4 (max 5 points)
 #
 # The gender of a *Sarchiapus E.* individual is defined by the first letter of its DNA: an `'A'` or a `'C'` is considered a male, otherwise is considered a female. Add a column to the data with the gender.
 
-pass
+df['gender'] = (df['dna'].str.startswith('A') | df['dna'].str.startswith('C')).map(lambda x: 'M' if x else 'F') 
+
+df.head()
 
 # ### Exercise 5 (max 3 points)
 #
 # Plot the distribution of length for male *Sarchiapi E.*.
 #
 
-pass
+fig, ax = plt.subplots()
+_ = ax.hist(df[df['gender'] == 'M']['length'], bins='auto', density=True)
+
 
 # ### Exercise 6 (max 7 points)
 #
@@ -66,16 +82,41 @@ pass
 #
 # To get the full marks, you should declare correctly the type hints (the *signature* of the function) and add a doctest string. 
 
-pass
+def count_twins(s: str, c: str) -> int:
+    """Return how many times c*2 can be found in s.
+    >>> count_twins('ZXXZXXXZCCCX', 'X')
+    3
+    """
+    if len(s) < 2:
+        return 0
+    sub = count_twins(s[1:], c)
+    if s[0] == s[1] and s[0] == c:
+        return 1 + sub
+    return sub
+
+
+count_twins('ZXXZXXXZCCCX', 'X')
 
 # ### Exercise 7 (max 5 points)
 #
 # Using the function defined in Exercise 5, add a column `a_twins` with the number of `'A'` twins in the DNA of each *Sarchiapus E.*.
 
-pass
+df['a_twins'] = df['dna'].map(lambda x: count_twins(x, 'A'))
+
+df.head()
 
 # ### Exercise 8 (max 3 points)
 #
 # Consider the hypothesis that the length of each *Sarchiapus E.* is normally distributed with a mean equal to the number of `'A'` twins in its DNA and a standard deviation that you assume to be uniformed distributed between 0 and 10. Code this statistical hypothesis as a PyMC3 model and plot the distribution of the standard deviation after having seen the collected data.
 
-pass
+# +
+mymodel = pm.Model()
+
+with mymodel:
+    sigma = pm.Uniform('sigma', 0, 10)
+    slen = pm.Normal('length', df['a_twins'], sigma, observed=df['length'])
+    post = pm.sample()
+# -
+
+with mymodel:
+    pm.plot_posterior(post)
